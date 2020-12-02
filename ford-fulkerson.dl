@@ -1,0 +1,12 @@
+.decl edge(u: symbol, v: symbol, c: number, f: number)
+
+edge("s", "a", 5, 0).
+edge("a", "t", 2, 0).
+edge("s", "b", 1, 0).
+edge("b", "t", 1, 0).
+
+.decl path(n: symbol, m: symbol, c: number)
+.output path
+
+path(x, y, c) :- edge(x, y, c, _).
+path(x, z, min(d, e)) :- edge(x, y, d, _), path(y, z, e).
