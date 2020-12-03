@@ -3,18 +3,18 @@
 
 /* define G */
 .decl edge(u: symbol, v: symbol, c: number)
-/*
 edge("s", "a", 5).
 edge("a", "t", 2).
 edge("s", "b", 1).
 edge("b", "t", 1).
-*/
 
+/*
 edge(SOURCE, "B", 1000).
 edge(SOURCE, "C", 1000).
 edge("B", "C", 1).
 edge("B", SINK, 1000).
 edge("C", SINK, 1000).
+*/
 
 .decl pipe(u: symbol, v: symbol, f: number, g: number)
 .output pipe
