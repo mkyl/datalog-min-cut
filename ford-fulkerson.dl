@@ -32,10 +32,20 @@ aug_path([u, v, next], c, g) :- frwd_edge(u, v, c_1, g), aug_path(next, c_2, g),
 aug_path([u, v, next], c, g) :- back_edge(u, v, c_1, g), aug_path(next, c_2, g),
                                 next = [v, y, z], c = min(c_1, c_2), c > 0.
 
-.decl s_t_path(p: Path, c: number, g: number)
+.decl s_t_path(id : number, p: Path, c: number, g: number)
 .output s_t_path
 
-s_t_path(p, c, g) :- aug_path(p, c, g), p = ["s", t, r].
+s_t_path($, p, c, g) :- aug_path(p, c, g), p = ["s", t, r].
+
+.decl chosen(p : Path, c: number, g: number)
+.output chosen
+chosen(p, c, g) :- s_t_path(i, p, c, g), i = min id : s_t_path(id, _, _, g).
+chosen(p, c, g) :- chosen([u, v, p], c, g).
+
+frwd_edge(u, v, c_f - c, g + 1), back_edge(v, u, c_b + c, g + 1) :- 
+        chosen([u, v, next], c, g),
+		frwd_edge(u, v, c_f, g_1), g_1 = max m : frwd_edge(u, v, _, m),
+		back_edge(v, u, c_b, g_2), g_2 = max n : back_edge(v, u, _, n).
 
 // .decl answer(f: number)
 // .output answer
