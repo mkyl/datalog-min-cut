@@ -3,18 +3,31 @@
 
 /* define G */
 .decl edge(u: symbol, v: symbol, c: number)
+/*
 edge("s", "a", 5).
 edge("a", "t", 2).
 edge("s", "b", 1).
 edge("b", "t", 1).
+*/
+
+edge(SOURCE, "B", 1000).
+edge(SOURCE, "C", 1000).
+edge("B", "C", 1).
+edge("B", SINK, 1000).
+edge("C", SINK, 1000).
+
+.decl pipe(u: symbol, v: symbol, f: number, g: number)
+.output pipe
+// start with flow zero
+pipe(u, v, 0, 0) :- edge(u, v, _).
 
 /* define G_f */
 .decl frwd_edge(u: symbol, v: symbol, c: number, g: number)
 .decl back_edge(u: symbol, v: symbol, c: number, g: number)
 
-// all edges start with no flow at generation zero.
-frwd_edge(u, v, c, 0) :- edge(u, v, c).
-back_edge(v, u, 0, 0) :- edge(u, v, _).
+frwd_edge(u, v, c - f, g) :- edge(u, v, c), pipe(u, v, f, g).
+back_edge(v, u, f, g) :- edge(u, v, _), pipe(u, v, f, g).
+
 
 // record type to record variable-length paths
 .type Path = [
@@ -41,24 +54,24 @@ aug_path([u, v, next], c, g) :- back_edge(u, v, c_1, g), aug_path(next, c_2, g),
 s_t_path(ord(p), p, c, g) :- aug_path(p, c, g), p = [SOURCE, t, r].
 
 .decl min_path(i: number, p: Path, c: number, g: number)
-min_path(i, p, c, g) :- s_t_path(i, p, c, g), i = min k : s_t_path(k, _, _, g).
+// TODO: ISN'T IT WRONG TO DO MULTIPLE AUGMENTATIONS AT ONCE?
+min_path(i, p, c, g) :- s_t_path(i, p, c, g). //, i = min k : s_t_path(k, _, _, g).
 
 .decl chosen(p : Path, c: number, g: number)
 .output chosen
 chosen(p, c, g) :- min_path(_,p, c, g). 
 chosen(p, c, g) :- chosen([u, v, p], c, g), p != nil.
 
-.decl result(u: symbol, v: symbol, c: number, g: number)
+pipe(u, v, f + c, g + 1) :- 
+        pipe(u, v, f, g),
+        chosen([u, v, next], c, g),
+		frwd_edge(u, v, _, g), g = 0.
+
+pipe(u, v, f - c, g + 1) :-
+		pipe(u, v, f, g),
+        chosen([u, v, next], c, g),
+		back_edge(u, v, _, g), g = 0.
+
+.decl result(u: symbol, v: symbol, f: number)
 .output result
-result(u, v, c, g + 1) :- 
-        chosen([u, v, next], c, g),
-		frwd_edge(u, v, _, g).
-
-result(u, v, -c, g + 1) :- 
-        chosen([u, v, next], c, g),
-		back_edge(u, v, _, g).
-
-// .decl answer(f: number)
-// .output answer
-
-// answer(f) :- f = sum x : {s_t_flow(_, x, m), m = max g : s_t_flow(_, _, g)}.
+result(u, v, f) :- pipe(u, v, f, g), g = max m : pipe(u, v, _, m).
