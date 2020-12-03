@@ -13,20 +13,31 @@ edge("b", "t", 1).
 frwd_edge(u, v, c, 0) :- edge(u, v, c).
 back_edge(v, u, 0, 0) :- edge(u, v, _).
 
-.decl aug_path(u: symbol, v: symbol, c: number, g: number)
-aug_path(x, y, c, g) :- frwd_edge(x, y, c, g).
-aug_path(x, y, c, g) :- back_edge(x, y, c, g).
+// record type to record variable-length paths
+.type Path = [
+    from : symbol,
+    to : symbol,
+    rest : Path
+]
 
-aug_path(x, z, c, g) :- frwd_edge(x, y, d, g), aug_path(y, z, e, g),
-					    c = min(d, e), c > 0.
-aug_path(x, z, c, g) :- back_edge(x, y, d, g), aug_path(y, z, e, g),
-                        c = min(d, e), c > 0.
+// associate each augmented path with a capacity
+.decl aug_path(p: Path, c: number, g: number)
+aug_path([u, "t", nil], c, g) :- frwd_edge(u, "t", c, g), c > 0.
+aug_path([u, "t", nil], c, g) :- back_edge(u, "t", c, g), c > 0.
 
-.decl s_t_flow(c: number, f: number, g: number)
-s_t_flow(c, 0, 0) :- aug_path("s", "t", c, 0).
-s_t_flow(c, c, g + 1) :- s_t_flow(c, f, g), f < c. 
 
-.decl answer(f: number)
-.output answer
+// TODO: why can't I use _ as variable name in `next`?
+aug_path([u, v, next], c, g) :- frwd_edge(u, v, c_1, g), aug_path(next, c_2, g),
+                                next = [v, y, z], c = min(c_1, c_2), c > 0.
+aug_path([u, v, next], c, g) :- back_edge(u, v, c_1, g), aug_path(next, c_2, g),
+                                next = [v, y, z], c = min(c_1, c_2), c > 0.
 
-answer(f) :- f = sum x : {s_t_flow(_, x, m), m = max g : s_t_flow(_, _, g)}.
+.decl s_t_path(p: Path, c: number, g: number)
+.output s_t_path
+
+s_t_path(p, c, g) :- aug_path(p, c, g), p = ["s", t, r].
+
+// .decl answer(f: number)
+// .output answer
+
+// answer(f) :- f = sum x : {s_t_flow(_, x, m), m = max g : s_t_flow(_, _, g)}.
