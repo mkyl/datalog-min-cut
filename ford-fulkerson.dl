@@ -1,3 +1,6 @@
+#define SOURCE "s"
+#define SINK "t"
+
 /* define G */
 .decl edge(u: symbol, v: symbol, c: number)
 edge("s", "a", 5).
@@ -22,8 +25,8 @@ back_edge(v, u, 0, 0) :- edge(u, v, _).
 
 // associate each augmented path with a capacity
 .decl aug_path(p: Path, c: number, g: number)
-aug_path([u, "t", nil], c, g) :- frwd_edge(u, "t", c, g), c > 0.
-aug_path([u, "t", nil], c, g) :- back_edge(u, "t", c, g), c > 0.
+aug_path([u, SINK, nil], c, g) :- frwd_edge(u, SINK, c, g), c > 0.
+aug_path([u, SINK, nil], c, g) :- back_edge(u, SINK, c, g), c > 0.
 
 
 // TODO: why can't I use _ as variable name in `next`?
@@ -35,20 +38,25 @@ aug_path([u, v, next], c, g) :- back_edge(u, v, c_1, g), aug_path(next, c_2, g),
 .decl s_t_path(id : number, p: Path, c: number, g: number)
 .output s_t_path
 
-s_t_path(ord(p), p, c, g) :- aug_path(p, c, g), p = ["s", t, r].
+s_t_path(ord(p), p, c, g) :- aug_path(p, c, g), p = [SOURCE, t, r].
 
 .decl min_path(i: number, p: Path, c: number, g: number)
-min_path(i, p, c, g) :- s_t_path(i, p, c, g), i < j, j = min k : min_path(k, _, _, g).
+min_path(i, p, c, g) :- s_t_path(i, p, c, g), i = min k : s_t_path(k, _, _, g).
 
 .decl chosen(p : Path, c: number, g: number)
 .output chosen
 chosen(p, c, g) :- min_path(_,p, c, g). 
 chosen(p, c, g) :- chosen([u, v, p], c, g), p != nil.
 
-frwd_edge(u, v, c_f - c, g + 1), back_edge(v, u, c_b + c, g + 1) :- 
+.decl result(u: symbol, v: symbol, c: number, g: number)
+.output result
+result(u, v, c, g + 1) :- 
         chosen([u, v, next], c, g),
-		frwd_edge(u, v, c_f, g),
-		back_edge(v, u, c_b, g).
+		frwd_edge(u, v, _, g).
+
+result(u, v, -c, g + 1) :- 
+        chosen([u, v, next], c, g),
+		back_edge(u, v, _, g).
 
 // .decl answer(f: number)
 // .output answer
